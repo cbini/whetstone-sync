@@ -1,11 +1,8 @@
 import os
-import traceback
 
 import pandas as pd
 import whetstone
 from dotenv import load_dotenv
-
-# from datarobot.utilities import email
 
 load_dotenv()
 
@@ -112,8 +109,6 @@ def main():
                 print(f"\tUpdated")
         except Exception as e:
             print(e)
-            # subject = f"Whetstone User Sync Error"
-            # email.send_email(subject=subject, body=traceback.format_exc())
             continue
 
         ## deactivate or reactivate
@@ -152,5 +147,3 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         print(e)
-        # subject = f"Whetstone User Sync Error"
-        # email.send_email(subject=subject, body=traceback.format_exc())
