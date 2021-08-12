@@ -2,11 +2,13 @@ import gzip
 import json
 import os
 import pathlib
+import traceback
 
 import whetstone
 from dotenv import load_dotenv
 from google.cloud import storage
 
+from datarobot.utilities import email
 from settings import ENDPOINTS
 
 load_dotenv()
@@ -59,11 +61,14 @@ def main():
                 print(f"\tSaved to {'/'.join(data_file.parts[-4:])}!")
 
                 destination_blob_name = "whetstone/" + "/".join(data_file.parts[-2:])
-                blob = gcs_bucket.blob(destination_blob_name)
-                blob.upload_from_filename(data_file)
+                # blob = gcs_bucket.blob(destination_blob_name)
+                # blob.upload_from_filename(data_file)
                 print(f"\tUploaded to {destination_blob_name}!")
         except Exception as xc:
             print(xc)
+            email_subject = f"Whetstone Extract Error - {e_path}"
+            email_body = f"{xc}\n\n{traceback.format_exc()}"
+            email.send_email(subject=email_subject, body=email_body)
             continue
 
 
@@ -72,3 +77,6 @@ if __name__ == "__main__":
         main()
     except Exception as xc:
         print(xc)
+        email_subject = "Whetstone Extract Error"
+        email_body = f"{xc}\n\n{traceback.format_exc()}"
+        email.send_email(subject=email_subject, body=email_body)
