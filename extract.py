@@ -61,8 +61,8 @@ def main():
                 print(f"\tSaved to {'/'.join(data_file.parts[-4:])}!")
 
                 destination_blob_name = "whetstone/" + "/".join(data_file.parts[-2:])
-                # blob = gcs_bucket.blob(destination_blob_name)
-                # blob.upload_from_filename(data_file)
+                blob = gcs_bucket.blob(destination_blob_name)
+                blob.upload_from_filename(data_file)
                 print(f"\tUploaded to {destination_blob_name}!")
         except Exception as xc:
             print(xc)
