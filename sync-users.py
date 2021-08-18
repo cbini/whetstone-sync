@@ -109,7 +109,6 @@ def main():
                 print("\tCreated")
             else:
                 ws.put("users", user_id, body=user_payload)
-                print("\tUpdated")
         except Exception as e:
             print(e)
             email_subject = "Whetstone User Sync Error"
