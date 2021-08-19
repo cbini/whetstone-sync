@@ -82,6 +82,13 @@ def main():
         school_observation_groups = school_match.get("observationGroups", [])
         school_id = school_match.get("_id")
 
+        ## restore
+        if not u["inactive"] and u["archivedAt"] is not pd.NA:
+            ws.put(
+                "users", record_id=f"{user_id}/restore?district={WHETSTONE_DISTRICT_ID}"
+            )
+            print("\tReactivated")
+
         ## build user payload
         user_payload = {
             "district": WHETSTONE_DISTRICT_ID,
@@ -111,14 +118,11 @@ def main():
             print(e)
             continue
 
-        ## deactivate or reactivate
-        if not u["inactive"] and u["archivedAt"] is not pd.NA:
-            reactivate_url = f"{ws.base_url}/users/{user_id}/archive"
-            ws.frontend_session.put(reactivate_url, params={"value": False})
-            print("\tReactivated")
-        elif u["inactive"] and u["archivedAt"] is pd.NA:
+        # archive
+        if u["inactive"] and u["archivedAt"] is pd.NA:
             ws.delete("users", user_id)
             print(f"\tArchived")
+            continue
 
         ## add to observation group
         if school_id:
