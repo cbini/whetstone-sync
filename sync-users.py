@@ -1,8 +1,11 @@
 import os
+import traceback
 
 import pandas as pd
 import whetstone
 from dotenv import load_dotenv
+
+from datarobot.utilities import email
 
 load_dotenv()
 
@@ -110,12 +113,18 @@ def main():
             if not user_id:
                 create_resp = ws.post("users", body=user_payload)
                 user_id = create_resp.get("_id")
-                print(f"\tCreated")
+                print("\tCreated")
             else:
                 ws.put("users", user_id, body=user_payload)
-                print(f"\tUpdated")
         except Exception as e:
             print(e)
+            email_subject = "Whetstone User Sync Error"
+            email_body = (
+                f"{u['user_name']} ({u['user_internal_id']})\n\n"
+                f"{e}\n\n"
+                f"{traceback.format_exc()}"
+            )
+            email.send_email(subject=email_subject, body=email_body)
             continue
 
         # archive
@@ -151,3 +160,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         print(e)
+        email_subject = "Whetstone User Sync Error"
+        email.send_email(subject=email_subject, body=traceback.format_exc())
