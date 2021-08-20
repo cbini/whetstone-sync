@@ -5,8 +5,6 @@ import pandas as pd
 import whetstone
 from dotenv import load_dotenv
 
-from datarobot.utilities import email
-
 load_dotenv()
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
@@ -88,7 +86,9 @@ def main():
         ## restore
         if not u["inactive"] and u["archivedAt"] is not pd.NA:
             ws.put(
-                "users", record_id=f"{user_id}/restore?district={WHETSTONE_DISTRICT_ID}"
+                "users",
+                record_id=f"{user_id}/restore",
+                params={"district": WHETSTONE_DISTRICT_ID},
             )
             print("\tReactivated")
 
@@ -116,15 +116,8 @@ def main():
                 print("\tCreated")
             else:
                 ws.put("users", user_id, body=user_payload)
-        except Exception as e:
-            print(e)
-            email_subject = "Whetstone User Sync Error"
-            email_body = (
-                f"{u['user_name']} ({u['user_internal_id']})\n\n"
-                f"{e}\n\n"
-                f"{traceback.format_exc()}"
-            )
-            email.send_email(subject=email_subject, body=email_body)
+        except Exception as xc:
+            print(xc)
             continue
 
         # archive
@@ -158,7 +151,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        print(e)
-        email_subject = "Whetstone User Sync Error"
-        email.send_email(subject=email_subject, body=traceback.format_exc())
+    except Exception as xc:
+        print(xc)
