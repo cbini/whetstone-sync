@@ -1,13 +1,10 @@
 import os
-import pathlib
 from datetime import datetime, timedelta
 
 from dateutil import tz
 from dotenv import load_dotenv
 
-PROJECT_PATH = pathlib.Path(__file__).absolute().parent
-
-load_dotenv(PROJECT_PATH / ".env")
+load_dotenv()
 
 WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
 LOCAL_TIMEZONE = os.getenv("LOCAL_TIMEZONE")
