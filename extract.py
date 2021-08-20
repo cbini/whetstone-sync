@@ -8,7 +8,6 @@ import whetstone
 from dotenv import load_dotenv
 from google.cloud import storage
 
-from datarobot.utilities import email
 from settings import ENDPOINTS
 
 load_dotenv()
@@ -51,10 +50,12 @@ def main():
             if count > 0:
                 data = r.get("data")
 
+                filename = e_name
                 if "archived" in e_params.keys():
-                    data_file = data_path / f"{e_name}_archived.json.gz"
-                else:
-                    data_file = data_path / f"{e_name}.json.gz"
+                    filename = f"{filename}_archived"
+                if "lastModified" in e_params.keys():
+                    filename = f"{filename}_{e_params['lastModified']}"
+                data_file = data_path / f"{filename}.json.gz"
 
                 with gzip.open(data_file, "wt", encoding="utf-8") as f:
                     json.dump(data, f)
@@ -66,9 +67,6 @@ def main():
                 print(f"\tUploaded to {destination_blob_name}!")
         except Exception as xc:
             print(xc)
-            email_subject = f"Whetstone Extract Error - {e_path}"
-            email_body = f"{xc}\n\n{traceback.format_exc()}"
-            email.send_email(subject=email_subject, body=email_body)
             continue
 
 
@@ -77,6 +75,3 @@ if __name__ == "__main__":
         main()
     except Exception as xc:
         print(xc)
-        email_subject = "Whetstone Extract Error"
-        email_body = f"{xc}\n\n{traceback.format_exc()}"
-        email.send_email(subject=email_subject, body=email_body)

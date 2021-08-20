@@ -15,4 +15,5 @@ WHETSTONE_PASSWORD=myp455w0rd
 GCS_BUCKET_NAME=my-bucket-name
 WHETSTONE_IMPORT_FILE=/path/to/whetstone_users.json
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/gapps_creds.json
+LOCAL_TIMEZONE=MY/Timezone
 ```
