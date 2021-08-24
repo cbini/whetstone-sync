@@ -1,0 +1,16 @@
+[
+    {
+        "query": {
+            "schema": "extracts",
+            "table_name": "fpodms_students"
+        },
+        "output": {
+            "file": {
+                "extension": "json",
+                "options": {
+                    "orient": "records"
+                }
+            }
+        }
+    }
+]

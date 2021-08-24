@@ -1,0 +1,16 @@
+[
+    {
+        "query": {
+            "schema": "extracts",
+            "table_name": "whetstone_users"
+        },
+        "output": {
+            "file": {
+                "extension": "json",
+                "options": {
+                    "orient": "records"
+                }
+            }
+        }
+    }
+]
