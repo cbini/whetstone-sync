@@ -24,6 +24,7 @@ PROJECT_PATH = pathlib.Path(__file__).absolute().parent
 
 def main(config):
     if config:
+        config_name = re.split("[^a-zA-Z]", config)[-2]
         with open(config) as f:
             queries = json.load(f)
     else:
@@ -50,20 +51,14 @@ def main(config):
             print("\t\tSuccess!")
         except Exception as xc:
             print("\t\tFailure!")
-            # email.send_email(
-            #     f"{config.output.system_name} database extract error - {q.table_name}",
-            #     f"{e}\n{traceback.format_exc()}",
-            # )
+            print(xc)
+            print(traceback.format_exc())
             continue
 
         data_path = PROJECT_PATH / "data"
         file_name = q["output"]["file"].get("name") or table_name
         file_extension = q["output"]["file"]["extension"]
-        file_path = (
-            data_path
-            / re.split("[^a-zA-Z]", config)[-2]
-            / f"{file_name}.{file_extension}"
-        )
+        file_path = data_path / config_name / f"{file_name}.{file_extension}"
 
         if not file_path.parent.exists():
             file_path.parent.mkdir(parents=True)
@@ -82,16 +77,9 @@ def main(config):
 
 if __name__ == "__main__":
     try:
-        # parse config JSON file
         parser = argparse.ArgumentParser()
         parser.add_argument("-C", "--config", help="Config file", required=False)
         args = parser.parse_args()
-
         main(args.config)
     except Exception as xc:
         print(xc)
-        print(traceback.format_exc())
-        # email.send_email(
-        #     f"{config.output.system_name} extract error",
-        #     f"{e}\n{traceback.format_exc()}",
-        # )
