@@ -5,6 +5,8 @@ import pandas as pd
 import whetstone
 from dotenv import load_dotenv
 
+from datarobot.utilities import email
+
 load_dotenv()
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
@@ -118,12 +120,19 @@ def main():
                 ws.put("users", user_id, body=user_payload)
         except Exception as xc:
             print(xc)
+            email_subject = "Whetstone User Sync Error"
+            email_body = (
+                f"{u['user_name']} ({u['user_internal_id']})\n\n"
+                f"{xc}\n\n"
+                f"{traceback.format_exc()}"
+            )
+            email.send_email(subject=email_subject, body=email_body)
             continue
 
         # archive
         if u["inactive"] and u["archivedAt"] is pd.NA:
             ws.delete("users", user_id)
-            print(f"\tArchived")
+            print("\tArchived")
             continue
 
         ## add to observation group
@@ -153,3 +162,5 @@ if __name__ == "__main__":
         main()
     except Exception as xc:
         print(xc)
+        email_subject = "Whetstone User Sync Error"
+        email.send_email(subject=email_subject, body=traceback.format_exc())
