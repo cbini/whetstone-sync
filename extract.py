@@ -83,3 +83,5 @@ if __name__ == "__main__":
         main(args.config)
     except Exception as xc:
         print(xc)
+        print(traceback.format_exc())
+        
