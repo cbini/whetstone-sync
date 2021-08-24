@@ -36,11 +36,8 @@ def main():
 
     # pull current data
     schools = ws.get("schools").get("data")
-    grades = ws.get("generic-tags/grades").get("data")
-    courses = ws.get("generic-tags/courses").get("data")
     current_users = ws.get("users").get("data")
     archive_users = ws.get("users", params={"archived": True}).get("data")
-    roles = ws.get("roles", params={"district": WHETSTONE_DISTRICT_ID}).get("data")
     users = current_users + archive_users
 
     # load ws users into df
@@ -49,7 +46,6 @@ def main():
     # load import users into df
     import_users = pd.read_json(WHETSTONE_IMPORT_FILE).convert_dtypes()
     import_users.user_internal_id = import_users.user_internal_id.astype("string")
-    import_users.coach_internal_id = import_users.coach_internal_id.astype("string")
     import_users.inactive = import_users.inactive.astype(bool)
     import_users = import_users.fillna("")
 
@@ -72,20 +68,13 @@ def main():
         print(f"{u['user_name']} ({u['user_internal_id']})")
 
         # get IDs
-        grade_id = get_matching_record(grades, "name", u["grade_name"]).get("_id")
-        course_id = get_matching_record(courses, "name", u["course_name"]).get("_id")
-        role_id = get_matching_record(roles, "name", u["role_name"]).get("_id")
         user_id = get_matching_record(users, "internalId", u["user_internal_id"]).get(
             "_id"
         )
-        coach_id = get_matching_record(users, "internalId", u["coach_internal_id"]).get(
-            "_id"
-        )
-        school_match = get_matching_record(schools, "name", u["school_name"])
+        school_match = get_matching_record(schools, "_id", u["school_id"])
         school_observation_groups = school_match.get("observationGroups", [])
-        school_id = school_match.get("_id")
 
-        ## restore
+        # restore
         if not u["inactive"] and u["archivedAt"] is not pd.NA:
             ws.put(
                 "users",
@@ -94,7 +83,7 @@ def main():
             )
             print("\tReactivated")
 
-        ## build user payload
+        # build user payload
         user_payload = {
             "district": WHETSTONE_DISTRICT_ID,
             "name": u["user_name"],
@@ -102,15 +91,15 @@ def main():
             "internalId": u["user_internal_id"],
             "inactive": u["inactive"],
             "defaultInformation": {
-                "school": school_id,
-                "gradeLevel": grade_id,
-                "course": course_id,
+                "school": u["school_id"],
+                "gradeLevel": u["grade_id"],
+                "course": u["course_id"],
             },
-            "coach": coach_id,
-            "roles": [role_id],
+            "coach": u["coach_id"],
+            "roles": [u["role_id"]],
         }
 
-        ## create or update
+        # create or update
         try:
             if not user_id:
                 create_resp = ws.post("users", body=user_payload)
@@ -120,6 +109,7 @@ def main():
                 ws.put("users", user_id, body=user_payload)
         except Exception as xc:
             print(xc)
+            print(traceback.format_exc())
             email_subject = "Whetstone User Sync Error"
             email_body = (
                 f"{u['user_name']} ({u['user_internal_id']})\n\n"
@@ -135,8 +125,8 @@ def main():
             print("\tArchived")
             continue
 
-        ## add to observation group
-        if school_id:
+        # add to observation group
+        if u["school_id"]:
             group_match = get_matching_record(
                 school_observation_groups, "name", u["group_name"]
             )
@@ -149,8 +139,8 @@ def main():
             if not group_membership_match and not u["inactive"]:
                 update_query = {
                     "userId": user_id,
-                    "roleId": role_id,
-                    "schoolId": school_id,
+                    "roleId": u["role_id"],
+                    "schoolId": u["school_id"],
                     "groupId": group_id,
                 }
                 ws.post("school-roles", params=update_query, session_type="frontend")
@@ -162,5 +152,6 @@ if __name__ == "__main__":
         main()
     except Exception as xc:
         print(xc)
+        print(traceback.format_exc())
         email_subject = "Whetstone User Sync Error"
         email.send_email(subject=email_subject, body=traceback.format_exc())
