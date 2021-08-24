@@ -49,10 +49,10 @@ def main():
 
     # merge dfs
     merge_df = import_users.merge(
-        right=existing_users[["internalId", "archivedAt", "inactive"]],
+        right=existing_users[["_id", "archivedAt", "inactive"]],
         how="left",
-        left_on="user_internal_id",
-        right_on="internalId",
+        left_on="user_id",
+        right_on="_id",
         suffixes=("", "_ws"),
     )
     merge_df.inactive_ws = merge_df.inactive_ws.fillna(False)
@@ -66,9 +66,6 @@ def main():
         print(f"{u['user_name']} ({u['user_internal_id']})")
 
         # get IDs
-        user_id = get_matching_record(users, "internalId", u["user_internal_id"]).get(
-            "_id"
-        )
         school_match = get_matching_record(schools, "_id", u["school_id"])
         school_observation_groups = school_match.get("observationGroups", [])
 
@@ -76,7 +73,7 @@ def main():
         if not u["inactive"] and u["archivedAt"] is not pd.NA:
             ws.put(
                 "users",
-                record_id=f"{user_id}/restore",
+                record_id=f"{u['user_id']}/restore",
                 params={"district": WHETSTONE_DISTRICT_ID},
             )
             print("\tReactivated")
@@ -99,12 +96,11 @@ def main():
 
         # create or update
         try:
-            if not user_id:
+            if not u["user_id"]:
                 create_resp = ws.post("users", body=user_payload)
-                user_id = create_resp.get("_id")
                 print("\tCreated")
             else:
-                ws.put("users", user_id, body=user_payload)
+                ws.put("users", u["user_id"], body=user_payload)
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
@@ -112,7 +108,7 @@ def main():
 
         # archive
         if u["inactive"] and u["archivedAt"] is pd.NA:
-            ws.delete("users", user_id)
+            ws.delete("users", u["user_id"])
             print(f"\tArchived")
             continue
 
@@ -124,12 +120,12 @@ def main():
             group_id = group_match.get("_id")
             group_type_match = group_match[u["group_type"]]
             group_membership_match = get_matching_record(
-                group_type_match, "_id", user_id
+                group_type_match, "_id", u["user_id"]
             )
 
             if not group_membership_match and not u["inactive"]:
                 update_query = {
-                    "userId": user_id,
+                    "userId": u["user_id"],
                     "roleId": u["role_id"],
                     "schoolId": u["school_id"],
                     "groupId": group_id,
