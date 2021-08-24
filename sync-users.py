@@ -1,7 +1,7 @@
+import json
 import os
 import traceback
 
-import pandas as pd
 import whetstone
 from dotenv import load_dotenv
 
@@ -34,46 +34,28 @@ def main():
 
     # pull current data
     schools = ws.get("schools").get("data")
-    current_users = ws.get("users").get("data")
-    archive_users = ws.get("users", params={"archived": True}).get("data")
-    users = current_users + archive_users
 
-    # load ws users into df
-    existing_users = pd.DataFrame(users).convert_dtypes()
+    # load import users
+    with open(WHETSTONE_IMPORT_FILE) as f:
+        import_users = json.load(f)
 
-    # load import users into df
-    import_users = pd.read_json(WHETSTONE_IMPORT_FILE).convert_dtypes()
-    import_users.user_internal_id = import_users.user_internal_id.astype("string")
-    import_users.inactive = import_users.inactive.astype(bool)
-    import_users = import_users.fillna("")
-
-    # merge dfs
-    merge_df = import_users.merge(
-        right=existing_users[["_id", "archivedAt", "inactive"]],
-        how="left",
-        left_on="user_id",
-        right_on="_id",
-        suffixes=("", "_ws"),
-    )
-    merge_df.inactive_ws = merge_df.inactive_ws.fillna(False)
-    merge_users = merge_df.to_dict(orient="records")
-
-    for u in merge_users:
+    for u in import_users:
         # skip if inactive and already archived
-        if u["inactive"] and u["inactive_ws"] and u["archivedAt"] is not pd.NA:
+        if u["inactive"] and u["inactive_ws"] and u["archived_at"]:
             continue
 
         print(f"{u['user_name']} ({u['user_internal_id']})")
 
         # get IDs
+        user_id = u['user_id']
         school_match = get_matching_record(schools, "_id", u["school_id"])
         school_observation_groups = school_match.get("observationGroups", [])
 
         # restore
-        if not u["inactive"] and u["archivedAt"] is not pd.NA:
+        if not u["inactive"] and u["archived_at"]:
             ws.put(
                 "users",
-                record_id=f"{u['user_id']}/restore",
+                record_id=f"{user_id}/restore",
                 params={"district": WHETSTONE_DISTRICT_ID},
             )
             print("\tReactivated")
@@ -96,19 +78,20 @@ def main():
 
         # create or update
         try:
-            if not u["user_id"]:
+            if not user_id:
                 create_resp = ws.post("users", body=user_payload)
+                user_id = create_resp.get("_id")
                 print("\tCreated")
             else:
-                ws.put("users", u["user_id"], body=user_payload)
+                ws.put("users", user_id, body=user_payload)
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
             continue
 
         # archive
-        if u["inactive"] and u["archivedAt"] is pd.NA:
-            ws.delete("users", u["user_id"])
+        if u["inactive"] and not u["archivedAt"]:
+            ws.delete("users", user_id)
             print(f"\tArchived")
             continue
 
@@ -120,12 +103,12 @@ def main():
             group_id = group_match.get("_id")
             group_type_match = group_match[u["group_type"]]
             group_membership_match = get_matching_record(
-                group_type_match, "_id", u["user_id"]
+                group_type_match, "_id", user_id
             )
 
             if not group_membership_match and not u["inactive"]:
                 update_query = {
-                    "userId": u["user_id"],
+                    "userId": user_id,
                     "roleId": u["role_id"],
                     "schoolId": u["school_id"],
                     "groupId": group_id,
