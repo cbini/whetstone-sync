@@ -5,8 +5,6 @@ import traceback
 import whetstone
 from dotenv import load_dotenv
 
-from datarobot.utilities import email
-
 load_dotenv()
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
@@ -14,15 +12,10 @@ WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
 WHETSTONE_USERNAME = os.getenv("WHETSTONE_USERNAME")
 WHETSTONE_PASSWORD = os.getenv("WHETSTONE_PASSWORD")
 WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
-WHETSTONE_IMPORT_FILE = os.getenv("WHETSTONE_IMPORT_FILE")
+WHETSTONE_USERS_IMPORT_FILE = os.getenv("WHETSTONE_USERS_IMPORT_FILE")
+WHETSTONE_OBSVGRPS_IMPORT_FILE = os.getenv("WHETSTONE_OBSVGRPS_IMPORT_FILE")
 
 WHETSTONE_CLIENT_CREDENTIALS = (WHETSTONE_CLIENT_ID, WHETSTONE_CLIENT_SECRET)
-
-
-def get_matching_record(data, key, match_value):
-    return next(
-        iter([d for d in data if d.get(key) == match_value and d.get(key) != ""]), {}
-    )
 
 
 def main():
@@ -34,13 +27,11 @@ def main():
         password=WHETSTONE_PASSWORD,
     )
 
-    # pull current data
-    schools = ws.get("schools").get("data")
-
     # load import users
-    with open(WHETSTONE_IMPORT_FILE) as f:
+    with open(WHETSTONE_USERS_IMPORT_FILE) as f:
         import_users = json.load(f)
 
+    new_users = []
     for u in import_users:
         # skip if inactive and already archived
         if u["inactive"] and u["inactive_ws"] and u["archived_at"]:
@@ -49,9 +40,7 @@ def main():
         print(f"{u['user_name']} ({u['user_internal_id']})")
 
         # get IDs
-        user_id = u['user_id']
-        school_match = get_matching_record(schools, "_id", u["school_id"])
-        school_observation_groups = school_match.get("observationGroups", [])
+        user_id = u["user_id"]
 
         # restore
         if not u["inactive"] and u["archived_at"]:
@@ -75,27 +64,24 @@ def main():
                 "course": u["course_id"],
             },
             "coach": u["coach_id"],
-            "roles": [u["role_id"]],
+            "roles": json.loads(u["role_id"]),
         }
 
         # create or update
         try:
             if not user_id:
                 create_resp = ws.post("users", body=user_payload)
+
                 user_id = create_resp.get("_id")
+                u["user_id"] = user_id
+
+                new_users.append(u)
                 print("\tCreated")
             else:
                 ws.put("users", user_id, body=user_payload)
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
-            email_subject = "Whetstone User Sync Error"
-            email_body = (
-                f"{u['user_name']} ({u['user_internal_id']})\n\n"
-                f"{xc}\n\n"
-                f"{traceback.format_exc()}"
-            )
-            email.send_email(subject=email_subject, body=email_body)
             continue
 
         # archive
@@ -104,26 +90,32 @@ def main():
             print("\tArchived")
             continue
 
-        # add to observation group
-        if u["school_id"]:
-            group_match = get_matching_record(
-                school_observation_groups, "name", u["group_name"]
-            )
-            group_id = group_match.get("_id")
-            group_type_match = group_match[u["group_type"]]
-            group_membership_match = get_matching_record(
-                group_type_match, "_id", user_id
-            )
+    print("Processing school observation group changes...")
+    with open(WHETSTONE_OBSVGRPS_IMPORT_FILE) as f:
+        import_obsvgrps = json.load(f)
 
-            if not group_membership_match and not u["inactive"]:
-                update_query = {
-                    "userId": user_id,
-                    "roleId": u["role_id"],
-                    "schoolId": u["school_id"],
-                    "groupId": group_id,
-                }
-                ws.post("school-roles", params=update_query, session_type="frontend")
-                print(f"\tAdded to {u['group_name']} as {u['role_name']}")
+    for s in import_obsvgrps:
+        obsvgrps_payload = json.loads(s["observation_groups_dict"])
+        obsvgrps_payload["district"] = WHETSTONE_DISTRICT_ID
+        for nu in new_users:
+            if nu["school_id"] == s["school_id"]:
+                og_match = next(
+                    iter(
+                        [
+                            og
+                            for og in obsvgrps_payload["observationGroups"]
+                            if nu["group_name"] == og["name"]
+                        ]
+                    ),
+                    {},
+                )
+                role_user_ids = og_match.get(nu["group_type"])
+                role_user_ids.append(nu["user_id"])
+                print(
+                    f"\tAdded {nu['user_name']} to {nu['group_name']} as {nu['group_type']}"
+                )
+
+        ws.put("schools", record_id=s["school_id"], body=obsvgrps_payload)
 
 
 if __name__ == "__main__":
@@ -132,5 +124,3 @@ if __name__ == "__main__":
     except Exception as xc:
         print(xc)
         print(traceback.format_exc())
-        email_subject = "Whetstone User Sync Error"
-        email.send_email(subject=email_subject, body=traceback.format_exc())
