@@ -5,8 +5,6 @@ import traceback
 import whetstone
 from dotenv import load_dotenv
 
-from datarobot.utilities import email
-
 load_dotenv()
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
@@ -19,10 +17,10 @@ WHETSTONE_IMPORT_FILE = os.getenv("WHETSTONE_IMPORT_FILE")
 WHETSTONE_CLIENT_CREDENTIALS = (WHETSTONE_CLIENT_ID, WHETSTONE_CLIENT_SECRET)
 
 
-def get_matching_record(data, key, match_value):
-    return next(
-        iter([d for d in data if d.get(key) == match_value and d.get(key) != ""]), {}
-    )
+# def get_record(data, key, match_value):
+#     return next(
+#         iter([d for d in data if d.get(key) == match_value and d.get(key) != ""]), {}
+#     )
 
 
 def main():
@@ -34,8 +32,8 @@ def main():
         password=WHETSTONE_PASSWORD,
     )
 
-    # pull current data
-    schools = ws.get("schools").get("data")
+    # # pull current data
+    # schools = ws.get("schools").get("data")
 
     # load import users
     with open(WHETSTONE_IMPORT_FILE) as f:
@@ -49,9 +47,7 @@ def main():
         print(f"{u['user_name']} ({u['user_internal_id']})")
 
         # get IDs
-        user_id = u['user_id']
-        school_match = get_matching_record(schools, "_id", u["school_id"])
-        school_observation_groups = school_match.get("observationGroups", [])
+        user_id = u["user_id"]
 
         # restore
         if not u["inactive"] and u["archived_at"]:
@@ -75,7 +71,7 @@ def main():
                 "course": u["course_id"],
             },
             "coach": u["coach_id"],
-            "roles": [u["role_id"]],
+            "roles": json.loads(u["role_id"]),
         }
 
         # create or update
@@ -89,14 +85,20 @@ def main():
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
-            email_subject = "Whetstone User Sync Error"
-            email_body = (
-                f"{u['user_name']} ({u['user_internal_id']})\n\n"
-                f"{xc}\n\n"
-                f"{traceback.format_exc()}"
-            )
-            email.send_email(subject=email_subject, body=email_body)
             continue
+
+        # # cue up observation group changes
+        # school = get_record(schools, "_id", u["school_id"])
+        # if school:
+        #     school_obsv_grps = school.get("observationGroups", [])
+        #     obsv_grp = get_record(school_obsv_grps, "name", u["group_name"])
+        #     obsv_grp_role = obsv_grp.get(u["group_type"], [])
+        #     obsv_grp_mem = get_record(obsv_grp_role, "_id", user_id)
+        #     if not obsv_grp_mem:
+        #         print(f"\tAdded to {u['group_name']} as {u['group_type']}")
+        #         obsv_grp_role.append(
+        #             {"_id": user_id, "email": u["user_email"], "name": u["user_name"]}
+        #         )
 
         # archive
         if u["inactive"] and not u["archivedAt"]:
@@ -104,26 +106,15 @@ def main():
             print("\tArchived")
             continue
 
-        # add to observation group
-        if u["school_id"]:
-            group_match = get_matching_record(
-                school_observation_groups, "name", u["group_name"]
-            )
-            group_id = group_match.get("_id")
-            group_type_match = group_match[u["group_type"]]
-            group_membership_match = get_matching_record(
-                group_type_match, "_id", user_id
-            )
-
-            if not group_membership_match and not u["inactive"]:
-                update_query = {
-                    "userId": user_id,
-                    "roleId": u["role_id"],
-                    "schoolId": u["school_id"],
-                    "groupId": group_id,
-                }
-                ws.post("school-roles", params=update_query, session_type="frontend")
-                print(f"\tAdded to {u['group_name']} as {u['role_name']}")
+    # print("Processing school observation group changes...")
+    # for s in schools:
+    #     print(f"{s['name']}")
+    #     obsv_grps = s["observationGroups"]
+    #     for og in obsv_grps:
+    #         observees = [i.get("_id") for i in og.get("observees", [])]
+    #         observers = [i.get("_id") for i in og.get("observers", [])]
+    #         admins = [i.get("_id") for i in og.get("admins", [])]
+    #     print()
 
 
 if __name__ == "__main__":
@@ -132,5 +123,3 @@ if __name__ == "__main__":
     except Exception as xc:
         print(xc)
         print(traceback.format_exc())
-        email_subject = "Whetstone User Sync Error"
-        email.send_email(subject=email_subject, body=traceback.format_exc())
