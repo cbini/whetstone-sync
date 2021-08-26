@@ -12,15 +12,10 @@ WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
 WHETSTONE_USERNAME = os.getenv("WHETSTONE_USERNAME")
 WHETSTONE_PASSWORD = os.getenv("WHETSTONE_PASSWORD")
 WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
-WHETSTONE_IMPORT_FILE = os.getenv("WHETSTONE_IMPORT_FILE")
+WHETSTONE_USERS_IMPORT_FILE = os.getenv("WHETSTONE_USERS_IMPORT_FILE")
+WHETSTONE_OBSVGRPS_IMPORT_FILE = os.getenv("WHETSTONE_OBSVGRPS_IMPORT_FILE")
 
 WHETSTONE_CLIENT_CREDENTIALS = (WHETSTONE_CLIENT_ID, WHETSTONE_CLIENT_SECRET)
-
-
-# def get_record(data, key, match_value):
-#     return next(
-#         iter([d for d in data if d.get(key) == match_value and d.get(key) != ""]), {}
-#     )
 
 
 def main():
@@ -32,13 +27,11 @@ def main():
         password=WHETSTONE_PASSWORD,
     )
 
-    # # pull current data
-    # schools = ws.get("schools").get("data")
-
     # load import users
-    with open(WHETSTONE_IMPORT_FILE) as f:
+    with open(WHETSTONE_USERS_IMPORT_FILE) as f:
         import_users = json.load(f)
 
+    new_users = []
     for u in import_users:
         # skip if inactive and already archived
         if u["inactive"] and u["inactive_ws"] and u["archived_at"]:
@@ -78,7 +71,11 @@ def main():
         try:
             if not user_id:
                 create_resp = ws.post("users", body=user_payload)
+
                 user_id = create_resp.get("_id")
+                u["user_id"] = user_id
+
+                new_users.append(u)
                 print("\tCreated")
             else:
                 ws.put("users", user_id, body=user_payload)
@@ -87,34 +84,38 @@ def main():
             print(traceback.format_exc())
             continue
 
-        # # cue up observation group changes
-        # school = get_record(schools, "_id", u["school_id"])
-        # if school:
-        #     school_obsv_grps = school.get("observationGroups", [])
-        #     obsv_grp = get_record(school_obsv_grps, "name", u["group_name"])
-        #     obsv_grp_role = obsv_grp.get(u["group_type"], [])
-        #     obsv_grp_mem = get_record(obsv_grp_role, "_id", user_id)
-        #     if not obsv_grp_mem:
-        #         print(f"\tAdded to {u['group_name']} as {u['group_type']}")
-        #         obsv_grp_role.append(
-        #             {"_id": user_id, "email": u["user_email"], "name": u["user_name"]}
-        #         )
-
         # archive
         if u["inactive"] and not u["archivedAt"]:
             ws.delete("users", user_id)
             print("\tArchived")
             continue
 
-    # print("Processing school observation group changes...")
-    # for s in schools:
-    #     print(f"{s['name']}")
-    #     obsv_grps = s["observationGroups"]
-    #     for og in obsv_grps:
-    #         observees = [i.get("_id") for i in og.get("observees", [])]
-    #         observers = [i.get("_id") for i in og.get("observers", [])]
-    #         admins = [i.get("_id") for i in og.get("admins", [])]
-    #     print()
+    print("Processing school observation group changes...")
+    with open(WHETSTONE_OBSVGRPS_IMPORT_FILE) as f:
+        import_obsvgrps = json.load(f)
+
+    for s in import_obsvgrps:
+        obsvgrps_payload = json.loads(s["observation_groups_dict"])
+        obsvgrps_payload["district"] = WHETSTONE_DISTRICT_ID
+        for nu in new_users:
+            if nu["school_id"] == s["school_id"]:
+                og_match = next(
+                    iter(
+                        [
+                            og
+                            for og in obsvgrps_payload["observationGroups"]
+                            if nu["group_name"] == og["name"]
+                        ]
+                    ),
+                    {},
+                )
+                role_user_ids = og_match.get(nu["group_type"])
+                role_user_ids.append(nu["user_id"])
+                print(
+                    f"\tAdded {nu['user_name']} to {nu['group_name']} as {nu['group_type']}"
+                )
+
+        ws.put("schools", record_id=s["school_id"], body=obsvgrps_payload)
 
 
 if __name__ == "__main__":
