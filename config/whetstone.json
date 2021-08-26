@@ -12,5 +12,19 @@
                 }
             }
         }
+    },
+    {
+        "query": {
+            "schema": "extracts",
+            "table_name": "whetstone_observation_groups"
+        },
+        "output": {
+            "file": {
+                "extension": "json",
+                "options": {
+                    "orient": "records"
+                }
+            }
+        }
     }
 ]
