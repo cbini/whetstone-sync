@@ -5,6 +5,8 @@ import traceback
 import whetstone
 from dotenv import load_dotenv
 
+from datarobot.utilities import email
+
 load_dotenv()
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
@@ -82,6 +84,9 @@ def main():
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
+            email_subject = f"Whetstone User Create/Update Error - {u['user_internal_id']}"
+            email_body = f"{xc}\n\n{traceback.format_exc()}"
+            email.send_email(subject=email_subject, body=email_body)
             continue
 
         # archive
@@ -124,3 +129,6 @@ if __name__ == "__main__":
     except Exception as xc:
         print(xc)
         print(traceback.format_exc())
+        email_subject = "Whetstone User Sync Error"
+        email_body = f"{xc}\n\n{traceback.format_exc()}"
+        email.send_email(subject=email_subject, body=email_body)
