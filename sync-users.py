@@ -90,7 +90,7 @@ def main():
             continue
 
         # archive
-        if u["inactive"] and not u["archivedAt"]:
+        if u["inactive"] and not u["archived_at"]:
             ws.delete("users", user_id)
             print("\tArchived")
             continue
