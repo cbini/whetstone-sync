@@ -135,3 +135,5 @@ archive/
 .bash_secrets
 .qgtunnel_hosts
 .qgtunnel
+bin/
+vendor/

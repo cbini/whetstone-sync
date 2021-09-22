@@ -1,9 +1,8 @@
 # DATA GUN
 
-* Set QuotaGuard URL to QUOTAGUARDSTATIC_URL variable in `.bash_secrets`
+* Set QuotaGuard URL to QUOTAGUARDSTATIC_URL variable in `secrets.bash`
 * Save `.qgtunnel` config file to project folder
-* To update `qgtunnel` run:
+* Install `qgtunnel`:
     ```
     curl https://s3.amazonaws.com/quotaguard/qgtunnel-latest.tar.gz | tar xz
     ```
-    
