@@ -1,11 +1,9 @@
 [
     {
-        "query": {
-            "schema": "extracts",
-            "table_name": "fpodms_students"
-        },
+        "query": "SELECT * FROM extracts.fpodms_students",
         "output": {
             "file": {
+                "name": "fpodms_students",
                 "extension": "json",
                 "options": {
                     "orient": "records"

@@ -37,13 +37,7 @@ def main(config):
 
     # run all queries contained in config file
     for i, q in enumerate(queries):
-        schema = q["query"]["schema"]
-        table_name = q["query"]["table_name"]
-        where = q["query"].get("where")
-
-        sql = f"SELECT * FROM {schema}.{table_name}"
-        if where:
-            sql = f"{sql} WHERE {where}"
+        sql = q["query"]
         print(f"\t{i + 1}) {sql}")
 
         try:
@@ -56,7 +50,7 @@ def main(config):
             continue
 
         data_path = PROJECT_PATH / "data"
-        file_name = q["output"]["file"].get("name") or table_name
+        file_name = q["output"]["file"].get("name")
         file_extension = q["output"]["file"]["extension"]
         file_path = data_path / config_name / f"{file_name}.{file_extension}"
 
