@@ -1,11 +1,9 @@
 [
     {
-        "query": {
-            "schema": "extracts",
-            "table_name": "whetstone_users"
-        },
+        "query": "SELECT * FROM extracts.whetstone_users",
         "output": {
             "file": {
+                "name": "whetstone_users",
                 "extension": "json",
                 "options": {
                     "orient": "records"
@@ -14,12 +12,10 @@
         }
     },
     {
-        "query": {
-            "schema": "extracts",
-            "table_name": "whetstone_observation_groups"
-        },
+        "query": "SELECT * FROM extracts.whetstone_observation_groups",
         "output": {
             "file": {
+                "name": "whetstone_observation_groups",
                 "extension": "json",
                 "options": {
                     "orient": "records"

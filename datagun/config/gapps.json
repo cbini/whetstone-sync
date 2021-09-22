@@ -1,11 +1,9 @@
 [
     {
-        "query": {
-            "schema": "extracts",
-            "table_name": "gapps_users_students"
-        },
+        "query": "SELECT * FROM extracts.gapps_users_students",
         "output": {
             "file": {
+                "name": "gapps_users_students",
                 "extension": "json",
                 "options": {
                     "orient": "records"
@@ -14,12 +12,10 @@
         }
     },
     {
-        "query": {
-            "schema": "extracts",
-            "table_name": "gapps_users_admins"
-        },
+        "query": "SELECT * FROM extracts.gapps_users_admins",
         "output": {
             "file": {
+                "name": "gapps_users_admins",
                 "extension": "json",
                 "options": {
                     "orient": "records"
