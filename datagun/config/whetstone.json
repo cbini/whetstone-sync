@@ -10,17 +10,5 @@
                 }
             }
         }
-    },
-    {
-        "query": "SELECT * FROM extracts.whetstone_observation_groups",
-        "output": {
-            "file": {
-                "name": "whetstone_observation_groups",
-                "extension": "json",
-                "options": {
-                    "orient": "records"
-                }
-            }
-        }
     }
 ]
