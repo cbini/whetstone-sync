@@ -8,6 +8,7 @@ import whetstone
 from dotenv import load_dotenv
 from google.cloud import storage
 
+from datarobot.utilities import email
 from settings import ENDPOINTS
 
 load_dotenv()
@@ -68,6 +69,9 @@ def main():
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
+            email_subject = f"Whetstone Extract Error - {e_name}"
+            email_body = f"{xc}\n\n{traceback.format_exc()}"
+            email.send_email(subject=email_subject, body=email_body)
             continue
 
 
@@ -77,3 +81,6 @@ if __name__ == "__main__":
     except Exception as xc:
         print(xc)
         print(traceback.format_exc())
+        email_subject = "Whetstone Extract Error"
+        email_body = f"{xc}\n\n{traceback.format_exc()}"
+        email.send_email(subject=email_subject, body=email_body)
