@@ -37,10 +37,10 @@ def main():
         print(e_path)
 
         e_name = e_path.replace("generic-tags", "").replace("/", "")
-        data_path = PROJECT_PATH / "data" / e_name
-        if not data_path.exists():
-            data_path.mkdir(parents=True)
-            print(f"\tCreated {'/'.join(data_path.parts[-3:])}...")
+        file_dir = PROJECT_PATH / "data" / e_name
+        if not file_dir.exists():
+            file_dir.mkdir(parents=True)
+            print(f"\tCreated {file_dir}...")
 
         try:
             r = ws.get(e_path, params=e_params)
@@ -50,20 +50,20 @@ def main():
             if count > 0:
                 data = r.get("data")
 
-                filename = e_name
+                file_name = e_name
                 if "archived" in e_params.keys():
-                    filename = f"{filename}_archived"
+                    file_name = f"{file_name}_archived"
                 if "lastModified" in e_params.keys():
-                    filename = f"{filename}_{e_params['lastModified']}"
-                data_file = data_path / f"{filename}.json.gz"
+                    file_name = f"{file_name}_{e_params['lastModified']}"
+                file_path = file_dir / f"{file_name}.json.gz"
 
-                with gzip.open(data_file, "wt", encoding="utf-8") as f:
+                with gzip.open(file_path, "wt", encoding="utf-8") as f:
                     json.dump(data, f)
-                print(f"\tSaved to {'/'.join(data_file.parts[-4:])}!")
+                print(f"\tSaved to {file_path}!")
 
-                destination_blob_name = "whetstone/" + "/".join(data_file.parts[-2:])
+                destination_blob_name = "whetstone/" + "/".join(file_path.parts[-2:])
                 blob = gcs_bucket.blob(destination_blob_name)
-                blob.upload_from_filename(data_file)
+                blob.upload_from_filename(file_path)
                 print(f"\tUploaded to {destination_blob_name}!")
         except Exception as xc:
             print(xc)
