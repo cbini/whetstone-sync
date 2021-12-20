@@ -78,16 +78,18 @@ def main():
             print(f"\t{u['user_name']} ({u['user_internal_id']}) - ARCHIVED")
             continue
 
-    print("\nProcessing school observation group changes...")
+    print("\nProcessing school role changes...")
     schools = ws.get("schools").get("data")
     for s in schools:
         print(f"\t{s['name']}")
-        obsv_grp_payload = {"district": WHETSTONE_DISTRICT_ID, "observationGroups": []}
+        schools_payload = {"district": WHETSTONE_DISTRICT_ID, "observationGroups": []}
         school_users = [
             u for u in import_users if u["school_id"] == s["_id"] and not u["inactive"]
         ]
+
+        # observation groups
         for grp in s.get("observationGroups"):
-            grp_change = False
+            role_change = False
             grp_users = [su for su in school_users if su["group_name"] == grp["name"]]
             grp_roles = {k: grp[k] for k in grp if k not in ["_id", "name"]}
             grp_update = {"_id": grp["_id"], "name": grp["name"]}
@@ -98,13 +100,44 @@ def main():
                     if not ru["user_id"] in mem_ids:
                         mem_ids.append(ru["user_id"])
                         print(f"\t\tAdded {ru['user_name']} to {grp['name']}/{role}")
-                        grp_change = True
+                        role_change = True
                 grp_update[role] = mem_ids
-            obsv_grp_payload["observationGroups"].append(grp_update)
-        if grp_change:
-            ws.put("schools", record_id=s["_id"], body=obsv_grp_payload)
+            schools_payload["observationGroups"].append(grp_update)
+
+        # school admins
+        school_admins = s.get("admins")
+        new_school_admins = [
+            {"_id": su["user_id"], "name": su["user_name"]}
+            for su in school_users
+            if "School Admin" in su["role_names"]
+        ]
+        for nsa in new_school_admins:
+            sa_match = [xsa for xsa in school_admins if xsa["_id"] == nsa["_id"]]
+            if not sa_match:
+                print(f"\t\tAdded {nsa['name']} to School Admins")
+                school_admins.append(nsa)
+                role_change = True
+                schools_payload["admins"] = school_admins
+
+        # school assistant admins
+        school_admins = s.get("assistantAdmins")
+        new_school_admins = [
+            {"_id": su["user_id"], "name": su["user_name"]}
+            for su in school_users
+            if "School Assistant Admin" in su["role_names"]
+        ]
+        for nsa in new_school_admins:
+            sa_match = [xsa for xsa in school_admins if xsa["_id"] == nsa["_id"]]
+            if not sa_match:
+                print(f"\t\tAdded {nsa['name']} to School Assistant Admins")
+                school_admins.append(nsa)
+                role_change = True
+                schools_payload["assistantAdmins"] = school_admins
+
+        if role_change:
+            ws.put("schools", record_id=s["_id"], body=schools_payload)
         else:
-            print("\t\tNo observation group changes")
+            print("\t\tNo school role changes")
 
 
 if __name__ == "__main__":
