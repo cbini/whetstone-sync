@@ -120,19 +120,19 @@ def main():
                 schools_payload["admins"] = school_admins
 
         # school assistant admins
-        school_admins = s.get("assistantAdmins")
-        new_school_admins = [
+        asst_admins = s.get("assistantAdmins")
+        new_asst_admins = [
             {"_id": su["user_id"], "name": su["user_name"]}
             for su in school_users
             if "School Assistant Admin" in su["role_names"]
         ]
-        for nsa in new_school_admins:
-            sa_match = [xsa for xsa in school_admins if xsa["_id"] == nsa["_id"]]
+        for naa in new_asst_admins:
+            sa_match = [xsa for xsa in asst_admins if xsa["_id"] == naa["_id"]]
             if not sa_match:
-                print(f"\t\tAdded {nsa['name']} to School Assistant Admins")
-                school_admins.append(nsa)
+                print(f"\t\tAdded {naa['name']} to School Assistant Admins")
+                asst_admins.append(naa)
                 role_change = True
-                schools_payload["assistantAdmins"] = school_admins
+                schools_payload["assistantAdmins"] = asst_admins
 
         if role_change:
             ws.put("schools", record_id=s["_id"], body=schools_payload)
