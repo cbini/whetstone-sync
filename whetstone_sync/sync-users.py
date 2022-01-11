@@ -109,7 +109,7 @@ def main():
         new_school_admins = [
             {"_id": su["user_id"], "name": su["user_name"]}
             for su in school_users
-            if "School Admin" in su["role_names"]
+            if "School Admin" in su.get("role_names", [])
         ]
         for nsa in new_school_admins:
             sa_match = [xsa for xsa in school_admins if xsa["_id"] == nsa["_id"]]
@@ -124,7 +124,7 @@ def main():
         new_asst_admins = [
             {"_id": su["user_id"], "name": su["user_name"]}
             for su in school_users
-            if "School Assistant Admin" in su["role_names"]
+            if "School Assistant Admin" in su.get("role_names", [])
         ]
         for naa in new_asst_admins:
             sa_match = [xsa for xsa in asst_admins if xsa["_id"] == naa["_id"]]
