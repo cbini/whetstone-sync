@@ -95,7 +95,7 @@ def main():
             grp_update = {"_id": grp["_id"], "name": grp["name"]}
             for role, membership in grp_roles.items():
                 mem_ids = [m.get("_id") for m in membership]
-                role_users = [gu for gu in grp_users if gu["group_type"] == role]
+                role_users = [gu for gu in grp_users if role in gu["group_type"]]
                 for ru in role_users:
                     if not ru["user_id"] in mem_ids:
                         mem_ids.append(ru["user_id"])
