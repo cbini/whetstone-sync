@@ -30,7 +30,11 @@ def main(config):
     else:
         raise Exception("Missing argument: --config /path/to/config.json")
 
-    db_conn_string = f"{DB_TYPE}+{DB_API}://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    db_conn_string = (
+        f"{DB_TYPE}+{DB_API}://"
+        f"{DB_USERNAME}:{DB_PASSWORD}"
+        f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
     db_engine = sa.create_engine(db_conn_string)
 
     print("Extracting from database...")
@@ -78,4 +82,3 @@ if __name__ == "__main__":
     except Exception as xc:
         print(xc)
         print(traceback.format_exc())
-        

@@ -138,3 +138,4 @@ archive/
 bin/
 vendor/
 config/
+.pdm.toml
