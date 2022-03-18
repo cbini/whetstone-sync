@@ -3,9 +3,6 @@ import os
 import traceback
 
 import whetstone
-from dotenv import load_dotenv
-
-load_dotenv()
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
 WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
