@@ -2,9 +2,6 @@ import os
 from datetime import datetime, timedelta
 
 from dateutil import tz
-from dotenv import load_dotenv
-
-load_dotenv()
 
 WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
 LOCAL_TIMEZONE = os.getenv("LOCAL_TIMEZONE")
