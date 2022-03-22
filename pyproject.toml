@@ -32,7 +32,8 @@ requires = ["pdm-pep517"]
 build-backend = "pdm.pep517.api"
 
 [tool.pdm.scripts]
+_.env_file = ".env"
 extract.cmd = "python whetstone_sync/extract.py"
-extract.env_file = ".env"
+extract.site_packages = true
 sync-users.cmd = "python whetstone_sync/sync-users.py"
-sync-users.env_file = ".env"
+sync-users.site_packages = true
