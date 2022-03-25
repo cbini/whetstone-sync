@@ -134,3 +134,4 @@ dev/
 archive/
 .pdm.toml
 sync-users.sh
+.vscode/

@@ -7,8 +7,7 @@ authors = [
 ]
 dependencies = [
     "whetstone",
-    "google-cloud-storage",
-    "python-dateutil"]
+    "google-cloud-storage"]
 requires-python = ">=3.9"
 license = {text = "GPL3"}
 
