@@ -16,7 +16,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 
-PROJECT_PATH = pathlib.Path(__file__).absolute().parent
+PROJECT_PATH = pathlib.Path(__file__).absolute().parent.parent
 
 
 def main(config):
@@ -28,7 +28,11 @@ def main(config):
         raise Exception("Missing argument: --config /path/to/config.json")
 
     db_engine = sa.create_engine(
-        f"{DB_TYPE}+{DB_API}://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        (
+            f"{DB_TYPE}+{DB_API}://"
+            f"{DB_USERNAME}:{DB_PASSWORD}@"
+            f"{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        )
     )
 
     print("Extracting from database...")
