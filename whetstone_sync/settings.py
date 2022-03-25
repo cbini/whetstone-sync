@@ -1,13 +1,12 @@
 import os
 from datetime import datetime, timedelta
-
-from dateutil import tz
+from zoneinfo import ZoneInfo
 
 WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
 LOCAL_TIMEZONE = os.getenv("LOCAL_TIMEZONE")
 
 today = datetime.now().replace(
-    hour=0, minute=0, second=0, microsecond=0, tzinfo=tz.gettz(LOCAL_TIMEZONE)
+    hour=0, minute=0, second=0, microsecond=0, tzinfo=ZoneInfo(LOCAL_TIMEZONE)
 )
 last_modified = today - timedelta(days=3)
 last_modified_ts = last_modified.timestamp()
