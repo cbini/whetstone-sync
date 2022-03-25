@@ -137,5 +137,5 @@ archive/
 .qgtunnel
 bin/
 vendor/
-config/
+datagun/config/
 .pdm.toml
