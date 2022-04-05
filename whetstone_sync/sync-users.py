@@ -55,19 +55,26 @@ def main():
         }
 
         # create or update
-        try:
-            if not user_id:
+        if not user_id:
+            try:
                 create_resp = ws.post("users", body=user_payload)
 
                 user_id = create_resp.get("_id")
                 u["user_id"] = user_id
+
                 print(f"\t{u['user_name']} ({u['user_internal_id']}) - CREATED")
-            else:
+            except Exception as xc:
+                print(xc)
+                print(traceback.format_exc())
+                continue
+        else:
+            try:
                 ws.put("users", user_id, body=user_payload)
-        except Exception as xc:
-            print(xc)
-            print(traceback.format_exc())
-            continue
+                print(f"\t{u['user_name']} ({u['user_internal_id']}) - UPDATED")
+            except Exception as xc:
+                print(xc)
+                print(traceback.format_exc())
+                continue
 
         # archive
         if u["inactive"] and not u["archived_at"]:
@@ -81,7 +88,9 @@ def main():
         print(f"\t{s['name']}")
         schools_payload = {"district": WHETSTONE_DISTRICT_ID, "observationGroups": []}
         school_users = [
-            u for u in import_users if u["school_id"] == s["_id"] and not u["inactive"]
+            u
+            for u in import_users
+            if u["school_id"] == s["_id"] and u["user_id"] and not u["inactive"]
         ]
 
         # observation groups
