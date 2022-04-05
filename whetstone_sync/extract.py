@@ -14,7 +14,7 @@ WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
 
 WHETSTONE_CLIENT_CREDENTIALS = (WHETSTONE_CLIENT_ID, WHETSTONE_CLIENT_SECRET)
-PROJECT_PATH = pathlib.Path(__file__).absolute().parent
+SCRIPT_PATH = pathlib.Path(__file__).absolute().parent
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
         print(e_path)
 
         e_name = e_path.replace("generic-tags", "").replace("/", "")
-        file_dir = PROJECT_PATH / "data" / e_name
+        file_dir = SCRIPT_PATH / "data" / e_name
         if not file_dir.exists():
             file_dir.mkdir(parents=True)
             print(f"\tCreated {file_dir}...")
