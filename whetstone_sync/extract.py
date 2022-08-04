@@ -24,8 +24,13 @@ def save_file(file_path, data, gcs_bucket):
 
     destination_blob_name = "whetstone/" + "/".join(file_path.parts[-2:])
     blob = gcs_bucket.blob(destination_blob_name)
-    blob.upload_from_filename(file_path)
-    print(f"\tUploaded to {destination_blob_name}!")
+    try:
+        blob.upload_from_filename(file_path)
+        print(f"\tUploaded to {destination_blob_name}!")
+    except Exception as xc:
+        print(xc)
+        print(traceback.format_exc())
+        pass
 
 
 def main():
