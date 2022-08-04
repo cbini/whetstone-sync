@@ -4,8 +4,6 @@ import traceback
 
 import whetstone
 
-from datarobot.utilities import email
-
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
 WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
 WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
@@ -33,12 +31,17 @@ def main():
 
         # restore
         if not u["inactive"] and u["archived_at"]:
-            ws.put(
-                "users",
-                record_id=f"{user_id}/restore",
-                params={"district": WHETSTONE_DISTRICT_ID},
-            )
-            print(f"\t{u['user_name']} ({u['user_internal_id']}) - REACTIVATED")
+            try:
+                ws.put(
+                    "users",
+                    record_id=f"{user_id}/restore",
+                    params={"district": WHETSTONE_DISTRICT_ID},
+                )
+                print(f"\t{u['user_name']} ({u['user_internal_id']}) - REACTIVATED")
+            except Exception as xc:
+                print(xc)
+                print(traceback.format_exc())
+                continue
 
         # build user payload
         user_payload = {
@@ -68,31 +71,26 @@ def main():
             except Exception as xc:
                 print(xc)
                 print(traceback.format_exc())
-                email_subject = (
-                    f"Whetstone User Create Error - {u['user_internal_id']}"
-                )
-                email_body = f"{xc}\n\n{traceback.format_exc()}"
-                email.send_email(subject=email_subject, body=email_body)
                 continue
         else:
             try:
                 ws.put("users", user_id, body=user_payload)
-                print(f"\t{u['user_name']} ({u['user_internal_id']}) - UPDATED")                
+                print(f"\t{u['user_name']} ({u['user_internal_id']}) - UPDATED")
             except Exception as xc:
                 print(xc)
                 print(traceback.format_exc())
-                email_subject = (
-                    f"Whetstone User Update Error - {u['user_internal_id']}"
-                )
-                email_body = f"{xc}\n\n{traceback.format_exc()}"
-                email.send_email(subject=email_subject, body=email_body)
                 continue
 
         # archive
         if u["inactive"] and not u["archived_at"]:
-            ws.delete("users", user_id)
-            print(f"\t{u['user_name']} ({u['user_internal_id']}) - ARCHIVED")
-            continue
+            try:
+                ws.delete("users", user_id)
+                print(f"\t{u['user_name']} ({u['user_internal_id']}) - ARCHIVED")
+            except Exception as xc:
+                print(xc)
+                print(traceback.format_exc())
+            finally:
+                continue
 
     print("\nProcessing school role changes...")
     schools = ws.get("schools").get("data")
@@ -164,6 +162,3 @@ if __name__ == "__main__":
     except Exception as xc:
         print(xc)
         print(traceback.format_exc())
-        email_subject = "Whetstone User Sync Error"
-        email_body = f"{xc}\n\n{traceback.format_exc()}"
-        email.send_email(subject=email_subject, body=email_body)
