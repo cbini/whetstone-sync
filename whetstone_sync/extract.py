@@ -104,6 +104,8 @@ def main():
                 file_name = f"{e_name}_archived"
             if "lastModified" in e_params.keys():
                 file_name = f"{e_name}_{e_params['lastModified']}"
+            else:
+                file_name = e_name
 
             file_path = file_dir / f"{file_name}.json.gz"
             save_file(file_path=file_path, data=data, gcs_bucket=gcs_bucket)
