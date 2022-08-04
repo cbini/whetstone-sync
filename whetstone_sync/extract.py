@@ -43,6 +43,7 @@ def main():
     generic_tags = ws.get("generic-tags").get("data")
     generic_tags_endpoints = [{"path": f"generic-tags/{t}"} for t in generic_tags]
     all_endpoints = generic_tags_endpoints + ENDPOINTS
+    all_endpoints = ENDPOINTS
 
     # users
     """
@@ -107,7 +108,7 @@ def main():
 
             if "archived" in e_params.keys():
                 file_name = f"{e_name}_archived"
-            if "lastModified" in e_params.keys():
+            elif "lastModified" in e_params.keys():
                 file_name = f"{e_name}_{e_params['lastModified']}"
             else:
                 file_name = e_name
