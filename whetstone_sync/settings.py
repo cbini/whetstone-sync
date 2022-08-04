@@ -11,6 +11,11 @@ today = datetime.now().replace(
 last_modified = today - timedelta(days=3)
 last_modified_ts = last_modified.timestamp()
 
+USER_ENDPOINTS = [
+    {"path": "users"},
+    {"path": "users", "params": {"archived": True}},
+]
+
 ENDPOINTS = [
     {"path": "assignments", "params": {"lastModified": last_modified_ts}},
     {
@@ -24,7 +29,6 @@ ENDPOINTS = [
     {"path": "rubrics"},
     {"path": "schools"},
     {"path": "videos"},
-    {"path": "users"},
     {"path": "lessonplans/forms"},
     {"path": "lessonplans/groups"},
     {"path": "lessonplans/reviews"},
@@ -36,7 +40,6 @@ ENDPOINTS = [
     {"path": "rubrics", "params": {"archived": True}},
     {"path": "schools", "params": {"archived": True}},
     {"path": "videos", "params": {"archived": True}},
-    {"path": "users", "params": {"archived": True}},
     {"path": "lessonplans/forms", "params": {"archived": True}},
     {"path": "lessonplans/groups", "params": {"archived": True}},
     {"path": "lessonplans/reviews", "params": {"archived": True}},
