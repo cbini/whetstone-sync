@@ -8,6 +8,7 @@ import whetstone
 from google.cloud import storage
 
 from settings import ENDPOINTS, USER_ENDPOINTS
+from datarobot.utilities import email
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
 WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
@@ -55,6 +56,9 @@ def main():
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
+            email_subject = f"Whetstone Extract Error - Users"
+            email_body = f"{xc}\n\n{traceback.format_exc()}"
+            email.send_email(subject=email_subject, body=email_body)
 
         count = r.get("count")
         print(f"\tFound {count} records...")
@@ -93,6 +97,9 @@ def main():
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
+            email_subject = f"Whetstone Extract Error - {e_name}"
+            email_body = f"{xc}\n\n{traceback.format_exc()}"
+            email.send_email(subject=email_subject, body=email_body)
             continue
 
         count = r.get("count")
@@ -115,3 +122,6 @@ if __name__ == "__main__":
     except Exception as xc:
         print(xc)
         print(traceback.format_exc())
+        email_subject = "Whetstone Extract Error"
+        email_body = f"{xc}\n\n{traceback.format_exc()}"
+        email.send_email(subject=email_subject, body=email_body)
