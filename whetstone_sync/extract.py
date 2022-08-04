@@ -50,13 +50,11 @@ def main():
     This is a workaround until they fix it.
     """
     all_users = []
-    for e in USER_ENDPOINTS:
-        e_path = e.get("path")
-        e_params = e.get("params", {})
-        print(e)
+    for u in USER_ENDPOINTS:
+        print(u)
 
         try:
-            r = ws.get(e_path, params=e_params)
+            r = ws.get(u.get("path"), params=u.get("params", {}))
         except Exception as xc:
             print(xc)
             print(traceback.format_exc())
@@ -83,12 +81,14 @@ def main():
 
     # all other endpoints
     for e in all_endpoints:
+        print(e)
+
         e_path = e.get("path")
         e_params = e.get("params", {})
-        print(e_path)
 
         e_name = e_path.replace("generic-tags", "").replace("/", "")
         file_dir = FILE_DIR / "data" / e_name
+
         if not file_dir.exists():
             file_dir.mkdir(parents=True)
             print(f"\tCreated {file_dir}...")
