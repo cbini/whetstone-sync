@@ -6,7 +6,6 @@ import traceback
 
 import whetstone
 from google.cloud import storage
-
 from settings import ENDPOINTS, USER_ENDPOINTS
 
 WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
