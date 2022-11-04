@@ -8,13 +8,6 @@ import whetstone
 from google.cloud import storage
 from settings import ENDPOINTS, USER_ENDPOINTS
 
-WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
-WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
-GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
-
-WHETSTONE_CLIENT_CREDENTIALS = (WHETSTONE_CLIENT_ID, WHETSTONE_CLIENT_SECRET)
-FILE_DIR = pathlib.Path(__file__).absolute().parent
-
 
 def save_file(file_path, data, gcs_bucket):
     with gzip.open(file_path, "wt", encoding="utf-8") as f:
@@ -33,11 +26,18 @@ def save_file(file_path, data, gcs_bucket):
 
 
 def main():
+    script_dir = pathlib.Path(__file__).absolute().parent
+
     ws = whetstone.Whetstone()
-    ws.authorize_client(client_credentials=WHETSTONE_CLIENT_CREDENTIALS)
+    ws.authorize_client(
+        client_credentials=(
+            os.getenv("WHETSTONE_CLIENT_ID"),
+            os.getenv("WHETSTONE_CLIENT_SECRET"),
+        )
+    )
 
     gcs_storage_client = storage.Client()
-    gcs_bucket = gcs_storage_client.bucket(GCS_BUCKET_NAME)
+    gcs_bucket = gcs_storage_client.bucket(os.getenv("GCS_BUCKET_NAME"))
 
     generic_tags = ws.get("generic-tags").get("data")
     generic_tags_endpoints = [{"path": f"generic-tags/{t}"} for t in generic_tags]
@@ -66,7 +66,7 @@ def main():
             data = r.get("data")
             all_users.extend(data)
 
-    file_dir = FILE_DIR / "data" / "users"
+    file_dir = script_dir / "data" / "users"
     if not file_dir.exists():
         file_dir.mkdir(parents=True)
         print(f"\tCreated {file_dir}...")
@@ -76,8 +76,8 @@ def main():
         user_id = user.get("_id")
         print(user_id)
 
-        file_path = file_dir / f"{user_id}.json.gz"
-        save_file(file_path=file_path, data=user, gcs_bucket=gcs_bucket)
+        user_file_path = file_dir / f"{user_id}.json.gz"
+        save_file(file_path=user_file_path, data=user, gcs_bucket=gcs_bucket)
 
     # all other endpoints
     for e in all_endpoints:
@@ -87,7 +87,7 @@ def main():
         e_params = e.get("params", {})
 
         e_name = e_path.replace("generic-tags", "").replace("/", "")
-        file_dir = FILE_DIR / "data" / e_name
+        file_dir = script_dir / "data" / e_name
 
         if not file_dir.exists():
             file_dir.mkdir(parents=True)

@@ -4,20 +4,20 @@ import traceback
 
 import whetstone
 
-WHETSTONE_CLIENT_ID = os.getenv("WHETSTONE_CLIENT_ID")
-WHETSTONE_CLIENT_SECRET = os.getenv("WHETSTONE_CLIENT_SECRET")
-WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
-WHETSTONE_USERS_IMPORT_FILE = os.getenv("WHETSTONE_USERS_IMPORT_FILE")
-
-WHETSTONE_CLIENT_CREDENTIALS = (WHETSTONE_CLIENT_ID, WHETSTONE_CLIENT_SECRET)
-
 
 def main():
+    whetstone_district_id = os.getenv("WHETSTONE_DISTRICT_ID")
+
     ws = whetstone.Whetstone()
-    ws.authorize_client(client_credentials=WHETSTONE_CLIENT_CREDENTIALS)
+    ws.authorize_client(
+        client_credentials=(
+            os.getenv("WHETSTONE_CLIENT_ID"),
+            os.getenv("WHETSTONE_CLIENT_SECRET"),
+        )
+    )
 
     # load import users
-    with open(WHETSTONE_USERS_IMPORT_FILE) as f:
+    with open(os.getenv("WHETSTONE_USERS_IMPORT_FILE")) as f:
         import_users = json.load(f)
 
     print("Syncing users...")
@@ -35,7 +35,7 @@ def main():
                 ws.put(
                     "users",
                     record_id=f"{user_id}/restore",
-                    params={"district": WHETSTONE_DISTRICT_ID},
+                    params={"district": whetstone_district_id},
                 )
                 print(f"\t{u['user_name']} ({u['user_internal_id']}) - REACTIVATED")
             except Exception as xc:
@@ -45,7 +45,7 @@ def main():
 
         # build user payload
         user_payload = {
-            "district": WHETSTONE_DISTRICT_ID,
+            "district": whetstone_district_id,
             "name": u["user_name"],
             "email": u["user_email"],
             "internalId": u["user_internal_id"],
@@ -63,8 +63,8 @@ def main():
         if not user_id:
             try:
                 create_resp = ws.post("users", body=user_payload)
-
                 user_id = create_resp.get("_id")
+
                 u["user_id"] = user_id
 
                 print(f"\t{u['user_name']} ({u['user_internal_id']}) - CREATED")
@@ -98,7 +98,7 @@ def main():
         print(f"\t{s['name']}")
 
         role_change = False
-        schools_payload = {"district": WHETSTONE_DISTRICT_ID, "observationGroups": []}
+        schools_payload = {"district": whetstone_district_id, "observationGroups": []}
 
         school_users = [
             u
@@ -160,6 +160,7 @@ def main():
 
         if role_change:
             ws.put("schools", record_id=s["_id"], body=schools_payload)
+            print(schools_payload)
         else:
             print("\t\tNo school role changes")
 

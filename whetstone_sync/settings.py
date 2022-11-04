@@ -2,12 +2,16 @@ import os
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-WHETSTONE_DISTRICT_ID = os.getenv("WHETSTONE_DISTRICT_ID")
-LOCAL_TIMEZONE = os.getenv("LOCAL_TIMEZONE")
+whetstone_district_id = os.getenv("WHETSTONE_DISTRICT_ID")
 
 today = datetime.now().replace(
-    hour=0, minute=0, second=0, microsecond=0, tzinfo=ZoneInfo(LOCAL_TIMEZONE)
+    hour=0,
+    minute=0,
+    second=0,
+    microsecond=0,
+    tzinfo=ZoneInfo(os.getenv("LOCAL_TIMEZONE")),
 )
+
 last_modified = today - timedelta(days=3)
 last_modified_ts = last_modified.timestamp()
 
@@ -22,7 +26,7 @@ ENDPOINTS = [
         "path": "assignments",
         "params": {"archived": True, "lastModified": last_modified_ts},
     },
-    {"path": "roles", "params": {"district": WHETSTONE_DISTRICT_ID}},
+    {"path": "roles", "params": {"district": whetstone_district_id}},
     {"path": "informals"},
     {"path": "measurements"},
     {"path": "meetings"},
@@ -33,7 +37,7 @@ ENDPOINTS = [
     {"path": "lessonplans/groups"},
     {"path": "lessonplans/reviews"},
     {"path": "observations", "params": {"lastModified": last_modified_ts}},
-    {"path": "roles", "params": {"district": WHETSTONE_DISTRICT_ID, "archived": True}},
+    {"path": "roles", "params": {"district": whetstone_district_id, "archived": True}},
     {"path": "informals", "params": {"archived": True}},
     {"path": "measurements", "params": {"archived": True}},
     {"path": "meetings", "params": {"archived": True}},
