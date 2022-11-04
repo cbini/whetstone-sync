@@ -6,7 +6,8 @@ import traceback
 
 import whetstone
 from google.cloud import storage
-from settings import ENDPOINTS, USER_ENDPOINTS
+
+from whetstone_sync.settings import ENDPOINTS, USER_ENDPOINTS
 
 
 def save_file(file_path, data, gcs_bucket):
